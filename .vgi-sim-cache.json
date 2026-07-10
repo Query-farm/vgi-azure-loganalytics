@@ -1,0 +1,116 @@
+{
+  "1167e48c9700c798": {
+    "name": "browse_tables",
+    "outcome": "fail",
+    "reason": "result differs from the reference solution",
+    "friction": [],
+    "queries": 2,
+    "grader": "reference",
+    "path": {
+      "discovery_calls": 2,
+      "queries": 2,
+      "bind_errors": 0,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": false,
+      "score": 100
+    },
+    "suggestions": [],
+    "attempts_used": 1
+  },
+  "8eebd0d1a0fc7f99": {
+    "name": "audit_count_by_operation",
+    "outcome": "fail",
+    "reason": "reference_sql failed: Invalid Input Error: VGI Worker Exception: Error: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\nError: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/src/functions.ts:140:30)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/functions/table.ts:482:24)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/protocol/handlers/function.ts:208:24)\n    at async dispatchStream (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/dispatch/stream.ts:157:22)\n    at async serveOne (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:357:15)\n    at async serveConnection (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:214:20)\n    at async run (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:182:16)\n    at processTicksAndRejections (native:7:39) [worker: bun run /Users/rusty/Development/vgi-azure-loganalytics/src/worker.ts]",
+    "friction": [],
+    "queries": 2,
+    "grader": "reference",
+    "path": {
+      "discovery_calls": 3,
+      "queries": 2,
+      "bind_errors": 1,
+      "requirement_errors": 0,
+      "runtime_errors": 0,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": true,
+      "score": 45
+    },
+    "suggestions": [
+      "Agent never converged within the step budget \u2014 no example demonstrates this; add a vgi.executable_examples entry showing the canonical solution.",
+      "Agent ran 1 query that failed to bind (unknown column/function/table) before solving \u2014 names or struct paths aren't discoverable; tighten per-object docs (VGI2xx/VGI3xx) or add a worked example."
+    ],
+    "attempts_used": 1
+  },
+  "11a76ec35eba179b": {
+    "name": "incremental_watermark",
+    "outcome": "fail",
+    "reason": "reference_sql failed: Invalid Input Error: VGI Worker Exception: Error: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\nError: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/src/functions.ts:140:30)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/functions/table.ts:482:24)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/protocol/handlers/function.ts:208:24)\n    at async dispatchStream (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/dispatch/stream.ts:157:22)\n    at async serveOne (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:357:15)\n    at async serveConnection (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:214:20)\n    at async run (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:182:16)\n    at processTicksAndRejections (native:7:39) [worker: bun run /Users/rusty/Development/vgi-azure-loganalytics/src/worker.ts]",
+    "friction": [
+      "describe_function on loganalytics_query truncated its per-argument docs mid-list, so the parameter names/positions were unusable; I had to trigger a binder error to learn that kql and workspace are positional and since/timespan are named-only.",
+      "The function's output columns (result, _row_kind, _watermark_next) are never listed as a column schema anywhere \u2014 they only appear in prose inside the schema and function comments, and describe_table refuses to introspect a table function.",
+      "azure.main.loganalytics_tables documents its watermark column under the name time_column, but the view's own comment and the function docs both call it 'the TimeGenerated watermark column' \u2014 I guessed watermark_column first and got a binder error."
+    ],
+    "queries": 4,
+    "grader": "reference",
+    "path": {
+      "discovery_calls": 4,
+      "queries": 4,
+      "bind_errors": 2,
+      "requirement_errors": 0,
+      "runtime_errors": 1,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 1,
+      "hit_ceiling": false,
+      "score": 54
+    },
+    "suggestions": [
+      "Agent ran 2 queries that failed to bind (unknown column/function/table) before solving \u2014 names or struct paths aren't discoverable; tighten per-object docs (VGI2xx/VGI3xx) or add a worked example.",
+      "Agent looked up an object that doesn't exist \u2014 the metadata implies a name that isn't there; align docs/examples with the real schema.",
+      "Analyst noted: describe_function on loganalytics_query truncated its per-argument docs mid-list, so the parameter names/positions were unusable; I had to trigger a binder error to learn that kql and workspace are positional and since/timespan are named-only.",
+      "Analyst noted: The function's output columns (result, _row_kind, _watermark_next) are never listed as a column schema anywhere \u2014 they only appear in prose inside the schema and function comments, and describe_table refuses to introspect a table function.",
+      "Analyst noted: azure.main.loganalytics_tables documents its watermark column under the name time_column, but the view's own comment and the function docs both call it 'the TimeGenerated watermark column' \u2014 I guessed watermark_column first and got a binder error."
+    ],
+    "attempts_used": 1
+  },
+  "772c1df7824012a1": {
+    "name": "recent_signins",
+    "outcome": "fail",
+    "reason": "reference_sql failed: Invalid Input Error: VGI Worker Exception: Error: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\nError: loganalytics_query: attach an 'azure_graph' secret (TYPE azure_graph)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/src/functions.ts:140:30)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/functions/table.ts:482:24)\n    at <anonymous> (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi/src/protocol/handlers/function.ts:208:24)\n    at async dispatchStream (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/dispatch/stream.ts:157:22)\n    at async serveOne (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:357:15)\n    at async serveConnection (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:214:20)\n    at async run (/Users/rusty/Development/vgi-azure-loganalytics/node_modules/@query-farm/vgi-rpc/src/server.ts:182:16)\n    at processTicksAndRejections (native:7:39) [worker: bun run /Users/rusty/Development/vgi-azure-loganalytics/src/worker.ts]",
+    "friction": [
+      "No azure_graph secret is attached in this session, so loganalytics_query cannot execute \u2014 every call fails with a worker exception. The task is unanswerable as data; only the query can be produced.",
+      "`workspace` is a required positional GUID with no discoverable value: the only other catalog object, loganalytics_tables, is explicitly credential-free and exposes no workspace ids. There is no list_workspaces function, no default-workspace parameter, and no hint in the function docs about where the GUID comes from.",
+      "describe_function output for loganalytics_query is truncated mid-parameter-list ('parameters': ['kql', 'workspace', 'tim\u2026'), so per-argument docs, types, and defaults are not readable. I had to recover the true signature from a deliberate BinderException, which is the only place the arity, positional vs. named split, and the named args `since`/`timespan` are actually stated.",
+      "describe_table on loganalytics_tables also truncates its column list, and the column is named `time_column` while the schema comment and function docs both call it `TimeGenerated` / the watermark column. My first query guessed `timestamp_column` and failed.",
+      "The worker surfaces raw Node stack traces with absolute local filesystem paths (src/functions.ts:140, node_modules/...) in the SQL error message. That is noise for a query client and leaks the host layout."
+    ],
+    "queries": 4,
+    "grader": "reference",
+    "path": {
+      "discovery_calls": 3,
+      "queries": 4,
+      "bind_errors": 2,
+      "requirement_errors": 0,
+      "runtime_errors": 1,
+      "blocked": 0,
+      "redundant_describes": 0,
+      "not_found": 0,
+      "hit_ceiling": false,
+      "score": 62
+    },
+    "suggestions": [
+      "Agent ran 2 queries that failed to bind (unknown column/function/table) before solving \u2014 names or struct paths aren't discoverable; tighten per-object docs (VGI2xx/VGI3xx) or add a worked example.",
+      "Analyst noted: No azure_graph secret is attached in this session, so loganalytics_query cannot execute \u2014 every call fails with a worker exception. The task is unanswerable as data; only the query can be produced.",
+      "Analyst noted: `workspace` is a required positional GUID with no discoverable value: the only other catalog object, loganalytics_tables, is explicitly credential-free and exposes no workspace ids. There is no list_workspaces function, no default-workspace parameter, and no hint in the function docs about where the GUID comes from.",
+      "Analyst noted: describe_function output for loganalytics_query is truncated mid-parameter-list ('parameters': ['kql', 'workspace', 'tim\u2026'), so per-argument docs, types, and defaults are not readable. I had to recover the true signature from a deliberate BinderException, which is the only place the arity, positional vs. named split, and the named args `since`/`timespan` are actually stated.",
+      "Analyst noted: describe_table on loganalytics_tables also truncates its column list, and the column is named `time_column` while the schema comment and function docs both call it `TimeGenerated` / the watermark column. My first query guessed `timestamp_column` and failed.",
+      "Analyst noted: The worker surfaces raw Node stack traces with absolute local filesystem paths (src/functions.ts:140, node_modules/...) in the SQL error message. That is noise for a query client and leaks the host layout."
+    ],
+    "attempts_used": 1
+  }
+}

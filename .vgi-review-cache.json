@@ -1,0 +1,67 @@
+{
+  "0b27e38a5c2a68ae": {
+    "object": "azure",
+    "kind": "catalog",
+    "scores": {
+      "accuracy": 3,
+      "clarity": 4,
+      "completeness": 3,
+      "audience_fit": 3
+    },
+    "suggestions": [
+      "Both doc_llm and doc_md claim the catalog is 'a single SQL table function' / 'exposed as one DuckDB table function', but the schema also contains the credential-free `loganalytics_tables` discovery view \u2014 and the catalog's own `browse_tables` agent test expects an agent to find it. Add a sentence naming `azure.main.loganalytics_tables` as the no-credential entry point to call before `loganalytics_query`.",
+      "'fetch only rows newer than the last cursor (at-least-once within a safety lag)' understates what `resolveTimespan` actually does: the incremental window is `[since \u2212 5min, now \u2212 5min]`, so rows *older* than the cursor are re-delivered (caller must dedup) and rows from the last 5 minutes are never returned. State the 5-minute `LAG_MS` value, the re-read overlap, and the caller's dedup + persist-after-apply obligation.",
+      "The '>~500k rows / 64MB' limit is a Log Analytics service limit, not something the worker enforces \u2014 and `process()` materializes the entire result into one Arrow batch in memory. Say what an over-limit query actually does (server-side truncation/error, not a clean failure) so an agent knows to slice proactively rather than retry."
+    ],
+    "summary": "Well-written and keyword-rich, but it advertises only one object when there are two, and compresses the watermark's overlap/lag semantics into a parenthetical an agent can't act on."
+  },
+  "679d83605166ff3a": {
+    "object": "azure.main",
+    "kind": "schema",
+    "scores": {
+      "accuracy": 3,
+      "clarity": 4,
+      "completeness": 2,
+      "audience_fit": 3
+    },
+    "suggestions": [
+      "The schema comment ('query surface (loganalytics_query)'), doc_llm ('one KQL passthrough table function'), and the doc_md function table all omit `loganalytics_tables`, which lives in this schema. Add a row to the doc_md table (`loganalytics_tables` | browse common tables + starter KQL, no secret | one row per table) and mention it in doc_llm as the step-zero object.",
+      "doc_llm says a `since` pull produces 'a trailing marker row' unconditionally. In `runQuery`, `watermarkNext` is null \u2014 and `buildBatch` emits **no marker row** \u2014 whenever the KQL doesn't project `TimeGenerated` *or* the window returned zero rows. An agent looping on the marker will silently break on an empty poll; document that absence means 'keep your existing `since`'.",
+      "The `vgi.example_queries` entry describes `'AuditLogs | take 100'` as 'the 100 most recent audit-log entries'. KQL `take` returns an arbitrary, unordered 100 rows. Either fix the description to 'an arbitrary sample of 100 entries' or change the SQL to `AuditLogs | top 100 by TimeGenerated desc`."
+    ],
+    "summary": "Accurate about the function it documents, but it documents only half the schema and asserts a marker row that the code omits in two common cases."
+  },
+  "8db6483fb9180e86": {
+    "object": "azure.main.loganalytics_tables",
+    "kind": "view",
+    "scores": {
+      "accuracy": 4,
+      "clarity": 5,
+      "completeness": 3,
+      "audience_fit": 4
+    },
+    "suggestions": [
+      "doc_llm says querying this view lets an agent 'discover the workspace's queryable surface', but the view is a hardcoded 7-row VALUES relation \u2014 it reflects nothing about any real workspace. Tables like `SigninLogs` only exist if diagnostic settings route them there. Reword to 'commonly-available tables' and add the caveat that presence in a given workspace is not guaranteed (a KQL error on an absent table is the signal).",
+      "The `time_column` comment promises TimeGenerated is 'the datetime column to project for incremental (watermark) pulls', yet several `sample_kql` values cannot watermark as written: `Usage | summarize IngestedGB = ... by DataType` drops TimeGenerated entirely, so passing it with `since` yields no marker row. Either add TimeGenerated to those projections or add a column/note flagging which starter queries are watermark-safe.",
+      "Every `take`-based sample_kql is a data-loss trap when combined with `since`: `take` returns an arbitrary subset, so the watermark advances past rows that were never returned and they are never re-fetched. Warn in doc_md that `take` samples are for snapshot exploration only, and swap to `top N by TimeGenerated desc` (or drop the limit) for incremental use. Also note `Heartbeat`'s `arg_max(TimeGenerated, Computer) by Computer` is degenerate \u2014 it should be `arg_max(TimeGenerated, *)`."
+    ],
+    "summary": "Clear, correctly matches its five columns, and earns its credential-free framing \u2014 but it oversells itself as workspace discovery and ships starter KQL that quietly breaks the watermark contract it points at."
+  },
+  "dc1b9c3c34a51813": {
+    "object": "azure.main.loganalytics_query",
+    "kind": "table_function",
+    "scores": {
+      "accuracy": 3,
+      "clarity": 4,
+      "completeness": 3,
+      "audience_fit": 4
+    },
+    "suggestions": [
+      "The `since` parameter doc ('fetches only rows newer than this watermark') contradicts `resolveTimespan`, which builds `[since \u2212 LAG_MS, now \u2212 LAG_MS]` with an inclusive lower bound. Rows *before* the cursor are re-delivered by design and rows within the last 5 minutes are excluded. Replace with the concrete window, name the 5-minute lag, and state the two caller obligations the code comments already spell out: dedup on replay, and persist `_watermark_next` only after rows are durably applied.",
+      "doc_llm and doc_md both promise the marker row 'followed by one marker row whose `_watermark_next` is the cursor'. `buildBatch` skips the marker when `watermarkNext` is null \u2014 which happens when the KQL omits `TimeGenerated` **or** when the window returned zero rows. The `_watermark_next` column description only excuses the non-incremental case. Document both null paths and the correct recovery (retain the previous `since`).",
+      "Nothing tells an agent how to get *fields* out of the opaque `result` VARCHAR. Add one example that unpacks it, e.g. `SELECT result->>'UserPrincipalName' AS upn, result->>'TimeGenerated' AS ts FROM azure.main.loganalytics_query(...) WHERE _row_kind IS NULL`, and note that duplicate projected column names in the KQL collide into one JSON key.",
+      "Example 1's description calls `'AuditLogs | take 100'` 'the 100 most recent audit-log entries' \u2014 `take` is explicitly unordered in KQL. Use `top 100 by TimeGenerated desc` or correct the prose."
+    ],
+    "summary": "Parameter docs and result-column schema are unusually thorough, but the two load-bearing claims an agent builds a pipeline on \u2014 'rows newer than the watermark' and 'a marker row follows' \u2014 are both wrong against the code."
+  }
+}
