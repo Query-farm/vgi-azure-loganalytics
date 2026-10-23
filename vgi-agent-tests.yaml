@@ -1,0 +1,32 @@
+# Private grader sidecar for `vgi-lint simulate` (and `lint`'s VGI520 coverage). The worker
+# publishes only task names + prompts in `vgi.agent_test_tasks` (src/catalog.ts); these
+# grader fields are keyed by that name and never sent to the analyst agent.
+#
+# The loganalytics_query tasks call a live, credential-gated KQL surface that returns
+# workspace-specific, non-deterministic data, so their reference_sql is a representative
+# call (using a placeholder workspace GUID) used only to establish which object each task
+# exercises (VGI520) — the actual grading is by success_criteria (LLM judge), since an
+# exact-compare oracle would need live credentials and stable ground truth. The
+# browse_tables task exercises the credential-free loganalytics_tables discovery view and IS
+# deterministically gradable.
+tasks:
+  - name: browse_tables
+    reference_sql: >-
+      SELECT table_name, sample_kql FROM azure.main.loganalytics_tables WHERE table_name = 'SigninLogs'
+    success_criteria: >-
+      The answer reads the loganalytics_tables discovery view (no credentials needed) to list the available tables and surfaces the sample_kql for SigninLogs.
+  - name: recent_signins
+    reference_sql: >-
+      SELECT result FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated, UserPrincipalName | take 50', '00000000-0000-0000-0000-000000000000') WHERE _row_kind IS NULL
+    success_criteria: >-
+      The answer calls azure.main.loganalytics_query with a KQL string like 'SigninLogs | project TimeGenerated, UserPrincipalName | take 50' and a workspace GUID, and reads the returned JSON `result` column (data rows have _row_kind IS NULL).
+  - name: incremental_watermark
+    reference_sql: >-
+      SELECT _watermark_next FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated', '00000000-0000-0000-0000-000000000000', since := '2026-01-01T00:00:00Z') WHERE _row_kind = 'marker'
+    success_criteria: >-
+      The answer projects TimeGenerated in the KQL, reads _watermark_next from the marker row (_row_kind = 'marker') of the prior scan, and replays it via the since := '<iso>' argument on the next loganalytics_query call.
+  - name: audit_count_by_operation
+    reference_sql: >-
+      SELECT result FROM azure.main.loganalytics_query('AuditLogs | summarize count() by OperationName', '00000000-0000-0000-0000-000000000000') WHERE _row_kind IS NULL
+    success_criteria: >-
+      The answer calls loganalytics_query with a KQL aggregation such as 'AuditLogs | summarize count() by OperationName' and a workspace GUID (default P1D timespan is acceptable), and interprets the JSON `result` strings.

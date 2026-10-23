@@ -82,49 +82,29 @@ const CATALOG_TAGS: Record<string, string> = {
       sql: "SELECT result, _row_kind, _watermark_next FROM azure.main.loganalytics_query('AzureActivity | take 1', '00000000-0000-0000-0000-000000000000') LIMIT 0",
     },
   ]),
-  // The agent-suitability suite (VGI152), catalog only. The loganalytics_query tasks call a
-  // live, credential-gated KQL surface that returns workspace-specific, non-deterministic
-  // data, so their reference_sql is a representative call (using a placeholder workspace
-  // GUID) used only to establish which object each task exercises (VGI520) — the actual
-  // grading is by success_criteria (LLM judge), since an exact-compare oracle would need
-  // live credentials and stable ground truth. The browse_tables task exercises the
-  // credential-free loganalytics_tables discovery view and IS deterministically gradable.
+  // The agent-suitability suite (VGI152), catalog only. Only each task's name + prompt is
+  // published here (VGI416); the grader fields live in the private sidecar
+  // vgi-agent-tests.yaml, keyed by task name, and are never shown to the analyst.
   "vgi.agent_test_tasks": JSON.stringify([
     {
       name: "browse_tables",
       prompt:
         "Before I attach any credentials, which Log Analytics tables can I query here, and what is a good starting KQL for the sign-in table?",
-      reference_sql:
-        "SELECT table_name, sample_kql FROM azure.main.loganalytics_tables WHERE table_name = 'SigninLogs'",
-      success_criteria:
-        "The answer reads the loganalytics_tables discovery view (no credentials needed) to list the available tables and surfaces the sample_kql for SigninLogs.",
     },
     {
       name: "recent_signins",
       prompt:
         "Using the Azure Log Analytics workspace, list the 50 most recent sign-in events with their user principal name and time.",
-      reference_sql:
-        "SELECT result FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated, UserPrincipalName | take 50', '00000000-0000-0000-0000-000000000000') WHERE _row_kind IS NULL",
-      success_criteria:
-        "The answer calls azure.main.loganalytics_query with a KQL string like 'SigninLogs | project TimeGenerated, UserPrincipalName | take 50' and a workspace GUID, and reads the returned JSON `result` column (data rows have _row_kind IS NULL).",
     },
     {
       name: "incremental_watermark",
       prompt:
         "I already pulled sign-in logs once. How do I fetch only the rows that are new since my last pull?",
-      reference_sql:
-        "SELECT _watermark_next FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated', '00000000-0000-0000-0000-000000000000', since := '2026-01-01T00:00:00Z') WHERE _row_kind = 'marker'",
-      success_criteria:
-        "The answer projects TimeGenerated in the KQL, reads _watermark_next from the marker row (_row_kind = 'marker') of the prior scan, and replays it via the since := '<iso>' argument on the next loganalytics_query call.",
     },
     {
       name: "audit_count_by_operation",
       prompt:
         "Over the last day in the workspace, how many audit-log entries occurred, and can you break it down by operation name?",
-      reference_sql:
-        "SELECT result FROM azure.main.loganalytics_query('AuditLogs | summarize count() by OperationName', '00000000-0000-0000-0000-000000000000') WHERE _row_kind IS NULL",
-      success_criteria:
-        "The answer calls loganalytics_query with a KQL aggregation such as 'AuditLogs | summarize count() by OperationName' and a workspace GUID (default P1D timespan is acceptable), and interprets the JSON `result` strings.",
     },
   ]),
 };
