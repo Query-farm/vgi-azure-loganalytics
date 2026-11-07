@@ -55,7 +55,7 @@ const catalogInterface = new ReadOnlyCatalogInterface(makeCatalog(functions), re
 serveVgiWorker({
   name: "azure",
   doc: "Azure Monitor / Log Analytics KQL passthrough as a single SQL table function — run arbitrary Kusto (KQL) against a Log Analytics workspace and get results back as SQL rows, with optional incremental (watermark) pulls.",
-  version: "0.2.0",
+  version: "0.2.1",
   repositoryUrl: "https://github.com/Query-farm/vgi-azure-loganalytics",
   serverId: "vgi-azure-loganalytics",
   registry,
