@@ -33,6 +33,9 @@ export function makeQueryFunction(clientFactory: ClientFactory) {
   const schema = laSchema();
   return defineTableFunction<Args, State>({
     name: "loganalytics_query",
+    // Request the azure_graph secret at bind so the connector delivers it (a
+    // missing secret resolves to nothing, so credential-free LIMIT 0 binds still work).
+    requiredSecrets: ["azure_graph"],
     description:
       "Azure Monitor / Log Analytics KQL passthrough: KQL in, one JSON `result` string per row. " +
       "Optional TimeGenerated watermark (since := <iso>) for incremental pulls (at-least-once " +
