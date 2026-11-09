@@ -22,6 +22,7 @@ export const AZURE_GRAPH_SECRET: SecretTypeDescriptor = {
 /** Catalog-level tags: docs, discovery, provenance, and the agent-test suite. */
 const CATALOG_TAGS: Record<string, string> = {
   "vgi.title": "Azure Monitor Log Analytics",
+  "vgi.subtitle": "Run KQL queries against Azure Monitor Log Analytics workspaces from SQL, with incremental watermark pulls.",
   "vgi.doc_llm":
     "Azure Monitor / Log Analytics KQL passthrough as a single SQL table function. Reach for it to " +
     "run an arbitrary Kusto (KQL) query against a Log Analytics workspace and get the results back as " +
