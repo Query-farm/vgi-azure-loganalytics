@@ -26,10 +26,10 @@ export const INGESTION_BY_TABLE_EXAMPLE: ExampleQuery = {
 /** Driven by loganalytics_tables: curated tables with no ingestion recorded in Usage. */
 export const SILENT_TABLES_EXAMPLE: ExampleQuery = {
   description:
-    "Curated tables from loganalytics_tables with no ingestion recorded in the workspace's Usage table over the last day (e.g. a diagnostic setting or agent that is not sending data)",
+    "Curated tables from loganalytics_tables (other than Usage itself) with no ingestion recorded in the workspace's Usage table over the last day (e.g. a diagnostic setting or agent that is not sending data)",
   sql:
     "SELECT t.table_name, t.category FROM azure.main.loganalytics_tables t " +
-    "WHERE NOT EXISTS (SELECT 1 FROM azure.main.loganalytics_query('Usage | summarize IngestedGB = sum(Quantity) / 1000 by DataType', '<workspace-guid>') u " +
+    "WHERE t.table_name <> 'Usage' AND NOT EXISTS (SELECT 1 FROM azure.main.loganalytics_query('Usage | summarize IngestedGB = sum(Quantity) / 1000 by DataType', '<workspace-guid>') u " +
     "WHERE u._row_kind IS NULL AND u.result->>'DataType' = t.table_name) " +
     "ORDER BY t.category, t.table_name",
 };
