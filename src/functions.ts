@@ -12,6 +12,28 @@ import { Utf8 } from "@query-farm/apache-arrow";
 import { runQuery } from "./laquery.js";
 import { laSchema, buildBatch } from "./schema.js";
 import type { GraphClient } from "@vgi-azure/graph-core";
+import { INGESTION_BY_TABLE_EXAMPLE, type ExampleQuery } from "./examples.js";
+
+/** loganalytics_query's examples, shared by `examples` and its vgi.example_queries tag. */
+const QUERY_EXAMPLES: ExampleQuery[] = [
+  {
+    description: "Snapshot of the 100 most recent audit-log entries over the default P1D window",
+    sql: "SELECT result FROM azure.main.loganalytics_query('AuditLogs | take 100', '<workspace-guid>') WHERE _row_kind IS NULL",
+  },
+  INGESTION_BY_TABLE_EXAMPLE,
+  {
+    description: "Aggregate sign-in events by result type over the last hour",
+    sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | summarize count() by ResultType', '<workspace-guid>', timespan := 'PT1H') WHERE _row_kind IS NULL",
+  },
+  {
+    description: "Incremental pull of new sign-ins replaying a saved TimeGenerated watermark",
+    sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated, UserPrincipalName', '<workspace-guid>', since := '<prior _watermark_next>') WHERE _row_kind IS NULL",
+  },
+  {
+    description: "Read the watermark cursor to persist for the next incremental scan",
+    sql: "SELECT _watermark_next FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated', '<workspace-guid>', since := '2026-01-01T00:00:00Z') WHERE _row_kind = 'marker'",
+  },
+];
 
 export type ClientFactory = (secret: Record<string, unknown>) => GraphClient;
 
@@ -58,24 +80,7 @@ export function makeQueryFunction(clientFactory: ClientFactory) {
         "and emits the next cursor on the marker row. Empty (the default) performs a full `timespan` pull " +
         "with no marker row.",
     },
-    examples: [
-      {
-        sql: "SELECT result FROM azure.main.loganalytics_query('AuditLogs | take 100', '<workspace-guid>') WHERE _row_kind IS NULL",
-        description: "Snapshot of the 100 most recent audit-log entries over the default P1D window",
-      },
-      {
-        sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | summarize count() by ResultType', '<workspace-guid>', timespan := 'PT1H') WHERE _row_kind IS NULL",
-        description: "Aggregate sign-in events by result type over the last hour",
-      },
-      {
-        sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated, UserPrincipalName', '<workspace-guid>', since := '<prior _watermark_next>') WHERE _row_kind IS NULL",
-        description: "Incremental pull of new sign-ins replaying a saved TimeGenerated watermark",
-      },
-      {
-        sql: "SELECT _watermark_next FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated', '<workspace-guid>', since := '2026-01-01T00:00:00Z') WHERE _row_kind = 'marker'",
-        description: "Read the watermark cursor to persist for the next incremental scan",
-      },
-    ],
+    examples: QUERY_EXAMPLES,
     tags: {
       "vgi.category": "log-analytics-query",
       "vgi.title": "Log Analytics KQL Query",
@@ -114,26 +119,9 @@ export function makeQueryFunction(clientFactory: ClientFactory) {
         "`since`. Requires an app-only `azure_graph` secret with workspace read access.",
       // The native duckdb_functions().examples carrier drops descriptions under the
       // current FunctionInfo schema, so the described examples are re-surfaced here as
-      // the coverage-checked vgi.example_queries JSON tag (VGI515), byte-identical to
-      // the `examples` array above.
-      "vgi.example_queries": JSON.stringify([
-        {
-          description: "Snapshot of the 100 most recent audit-log entries over the default P1D window",
-          sql: "SELECT result FROM azure.main.loganalytics_query('AuditLogs | take 100', '<workspace-guid>') WHERE _row_kind IS NULL",
-        },
-        {
-          description: "Aggregate sign-in events by result type over the last hour",
-          sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | summarize count() by ResultType', '<workspace-guid>', timespan := 'PT1H') WHERE _row_kind IS NULL",
-        },
-        {
-          description: "Incremental pull of new sign-ins replaying a saved TimeGenerated watermark",
-          sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated, UserPrincipalName', '<workspace-guid>', since := '<prior _watermark_next>') WHERE _row_kind IS NULL",
-        },
-        {
-          description: "Read the watermark cursor to persist for the next incremental scan",
-          sql: "SELECT _watermark_next FROM azure.main.loganalytics_query('SigninLogs | project TimeGenerated', '<workspace-guid>', since := '2026-01-01T00:00:00Z') WHERE _row_kind = 'marker'",
-        },
-      ]),
+      // the coverage-checked vgi.example_queries JSON tag (VGI515), from the same
+      // QUERY_EXAMPLES list as the `examples` array above.
+      "vgi.example_queries": JSON.stringify(QUERY_EXAMPLES),
       "vgi.result_columns_schema": JSON.stringify([
         {
           name: "result",

@@ -4,6 +4,7 @@
 // and that is set in worker.ts's clientFactory, not here.
 
 import { Schema, Field, Utf8 } from "@query-farm/apache-arrow";
+import { INGESTION_BY_TABLE_EXAMPLE, SILENT_TABLES_EXAMPLE } from "./examples.js";
 import type { CatalogDescriptor, SecretTypeDescriptor, ViewDescriptor, VgiFunction } from "@query-farm/vgi";
 
 const REPO = "https://github.com/Query-farm/vgi-azure-loganalytics";
@@ -177,6 +178,8 @@ const SCHEMA_TAGS: Record<string, string> = {
       description: "Snapshot: the 100 most recent audit-log entries over the last day",
       sql: "SELECT result FROM azure.main.loganalytics_query('AuditLogs | take 100', '<workspace-guid>') WHERE _row_kind IS NULL",
     },
+    INGESTION_BY_TABLE_EXAMPLE,
+    SILENT_TABLES_EXAMPLE,
     {
       description: "Count sign-in events by result type over the last hour",
       sql: "SELECT result FROM azure.main.loganalytics_query('SigninLogs | summarize count() by ResultType', '<workspace-guid>', timespan := 'PT1H') WHERE _row_kind IS NULL",
@@ -230,7 +233,10 @@ const LOGANALYTICS_TABLES_VIEW: ViewDescriptor = {
       "commonly targets: one row per table giving its category, the datetime column to project for " +
       "watermarking (TimeGenerated), a short description, and a ready-to-run starter KQL string. Query it " +
       "to discover the workspace's queryable surface and a good opening KQL before attaching an " +
-      "azure_graph secret, then pass a row's sample_kql (optionally edited) to loganalytics_query.",
+      "azure_graph secret, then pass a row's sample_kql (optionally edited) to loganalytics_query as a " +
+      "string literal (its kql argument cannot be a column reference, LATERAL join, or subquery). Join the " +
+      "index to loganalytics_query output on table_name (e.g. the Usage table's DataType) to label or " +
+      "find gaps in what the workspace ingests.",
     "vgi.doc_md":
       "## loganalytics_tables\n\n" +
       "A browsable, credential-free index of common Log Analytics tables (SigninLogs, AuditLogs, " +
@@ -258,6 +264,7 @@ const LOGANALYTICS_TABLES_VIEW: ViewDescriptor = {
         description: "Get the starter KQL for the identity tables",
         sql: "SELECT table_name, sample_kql FROM azure.main.loganalytics_tables WHERE category = 'identity' ORDER BY table_name",
       },
+      SILENT_TABLES_EXAMPLE,
     ]),
   },
 };
