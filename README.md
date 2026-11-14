@@ -2,6 +2,11 @@
 
 A [VGI](https://query.farm) worker (**Azure Monitor Log Analytics**) for DuckDB. KQL passthrough to an Azure Monitor / Log Analytics workspace as one DuckDB table function, `loganalytics_query(kql, workspace)`. The KQL text is sent verbatim and each Kusto result row comes back as one JSON `result` string. A plain call pulls a `timespan` window (an ISO-8601 duration, default `P1D`); for incremental pulls, project `TimeGenerated` in the KQL and pass `since := '<prior _watermark_next>'`, and the function adds a marker row (`_row_kind = 'marker'`) whose `_watermark_next` is the cursor to persist. Very large result sets (over roughly 500k rows / 64 MB) must be time-sliced by the caller. A credential-free `loganalytics_tables` view lists queryable tables with sample KQL.
 
+## Executed notebooks
+
+[Measure ingestion and coverage](notebooks/README.md) queries synthetic Kusto
+responses through the real worker, with typed SQL, coverage checks and charts.
+
 ## Quick start
 
 Every [GitHub release](https://github.com/Query-farm/vgi-azure-loganalytics/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
