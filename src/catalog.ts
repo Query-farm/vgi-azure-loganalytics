@@ -43,6 +43,17 @@ export const AZURE_GRAPH_SECRET: SecretTypeDescriptor = {
   ),
 };
 
+// Upstream references rendered into the catalog docs (VGI183: link out to the service, API
+// docs and app-registration/permission docs this worker actually calls).
+const SOURCES_MD =
+  "### Sources and references\n\n" +
+  "- [Azure Monitor Log Analytics API overview](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/overview) — the query API and its authentication\n" +
+  "- [Query - Execute REST API](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/execute) — the endpoint `loganalytics_query` calls\n" +
+  "- [Kusto Query Language (KQL) reference](https://learn.microsoft.com/en-us/kusto/query/) — the query language passed through verbatim\n" +
+  "- [Register an app](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) — create the app-only client credentials for the `azure_graph` secret";
+const SOURCES_LLM =
+  " Upstream Microsoft docs: Azure Monitor Log Analytics API overview https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/overview; Query - Execute REST API https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/execute; Kusto Query Language (KQL) reference https://learn.microsoft.com/en-us/kusto/query/; Register an app https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app.";
+
 /** Catalog-level tags: docs, discovery, provenance, and the agent-test suite. */
 const CATALOG_TAGS: Record<string, string> = {
   "vgi.title": "Azure Monitor Log Analytics",
@@ -57,7 +68,7 @@ const CATALOG_TAGS: Record<string, string> = {
     "row. A non-incremental call pulls a `timespan` window (default P1D). Large result sets (>~500k " +
     "rows / 64MB) must be time-sliced by the caller. Requires an app-only (client-credentials) " +
     "'azure_graph' secret (tenant_id, client_id, client_secret) whose service principal has read access " +
-    "to the target Log Analytics workspace (the token is minted for the api.loganalytics.io audience).",
+    "to the target Log Analytics workspace (the token is minted for the api.loganalytics.io audience)." + SOURCES_LLM,
   "vgi.doc_md":
     "## Azure Monitor Log Analytics\n\n" +
     "KQL passthrough to an Azure Monitor / Log Analytics workspace, exposed as one DuckDB table " +
@@ -69,7 +80,7 @@ const CATALOG_TAGS: Record<string, string> = {
     "`since := '<prior _watermark_next>'`; the function then emits the changed rows plus a single marker " +
     "row (`_row_kind = 'marker'`) whose `_watermark_next` column is the cursor to persist and replay. An " +
     "app-only `azure_graph` secret (Microsoft Entra client credentials) with workspace read access is " +
-    "required.",
+    "required.\n\n" + SOURCES_MD,
   "vgi.keywords": JSON.stringify([
     "azure",
     "azure monitor",
