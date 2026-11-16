@@ -1,0 +1,38 @@
+# name: test/sql/offline.test
+# description: vgi-azure-loganalytics without credentials or network: ATTACH, the advertised functions
+# and tables, and every catalog executable example (credential-free bind probes and
+# static manifests). Runs over every transport; the live Azure scans need an azure_graph
+# secret and are not exercised here.
+# group: [sql]
+
+require-env VGI_TEST_WORKER
+
+# Transport failures must fail the suite rather than silently skip it.
+set ignore_error_messages
+
+statement ok
+ATTACH 'azure' AS azure (TYPE vgi, LOCATION '{VGI_TEST_WORKER}');
+
+query TT
+SELECT DISTINCT schema_name, function_name FROM duckdb_functions() WHERE database_name = 'azure' ORDER BY ALL;
+----
+main	loganalytics_query
+
+query TT
+SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = 'azure'
+UNION ALL SELECT schema_name, view_name FROM duckdb_views() WHERE database_name = 'azure' ORDER BY ALL;
+----
+main	loganalytics_tables
+
+# query_bind_probe: Bind loganalytics_query and expose its result columns (credential-free; drop LIMIT 0 and attach an azure_graph secret to run the KQL against a real workspace)
+query TT
+SELECT column_name, column_type FROM (DESCRIBE SELECT result, _row_kind, _watermark_next FROM azure.main.loganalytics_query('AzureActivity | take 1', '00000000-0000-0000-0000-000000000000') LIMIT 0);
+----
+result	VARCHAR
+_row_kind	VARCHAR
+_watermark_next	VARCHAR
+
+query I
+SELECT count(*) FROM (SELECT result, _row_kind, _watermark_next FROM azure.main.loganalytics_query('AzureActivity | take 1', '00000000-0000-0000-0000-000000000000') LIMIT 0);
+----
+0

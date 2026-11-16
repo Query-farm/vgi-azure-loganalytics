@@ -52,7 +52,7 @@ for (const f of functions) registry.register(f);
 
 const catalogInterface = new ReadOnlyCatalogInterface(makeCatalog(functions), registry);
 
-serveVgiWorker({
+const server = serveVgiWorker({
   name: "azure",
   doc: "Azure Monitor / Log Analytics KQL passthrough as a single SQL table function — run arbitrary Kusto (KQL) against a Log Analytics workspace and get results back as SQL rows, with optional incremental (watermark) pulls.",
   version: "0.4.1",
@@ -61,3 +61,7 @@ serveVgiWorker({
   registry,
   catalogInterface,
 });
+
+// bin/<worker> --http and ci/run-integration.sh read the bound port from this line
+// (PORT=0 binds any free port).
+console.log(`PORT:${server.port}`);
